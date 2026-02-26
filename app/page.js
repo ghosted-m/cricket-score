@@ -1,7 +1,7 @@
 "use client";
 import Page from "./live-score/page";
 import useData from "@/components/getData";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
