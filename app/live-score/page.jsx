@@ -4,7 +4,9 @@ import { useState } from "react";
 const page = ({data}) => {
   const headers = ['players', 'runs', 'balls', 'fours', 'sixes', 'sr'];
 const [dataState, setDataState] = useState(data);
-
+if (!data || data.length === 0) {
+  return <div>Loading...</div>;
+}
   const safeInnings = (item) => item?.innings?.inning1 ?? [];
   // -------------------------------------------
   const getFour = (data, player) => {
