@@ -1,9 +1,8 @@
 'use client';
 import { useState } from "react";
-const page = ({ data }) => {
+const page = (props) => {
   const headers = ['players', 'runs', 'balls', 'fours', 'sixes', 'sr'];
-  const [dataState, setDataState] = useState(data);
-
+const data = (!props.data) ? [] : props.data;
   const safeInnings = (item) => item?.innings?.inning1 ?? [];
   // -------------------------------------------
   const getFour = (data, player) => {
