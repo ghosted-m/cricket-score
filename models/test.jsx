@@ -21,6 +21,9 @@ const deliverySchema = new Schema({
             type: String,
             enum: ['playing', 'out'],
             default: 'playing'
+        },
+        outType: {
+            type: String,
         }
     },
     nonStrike: {
@@ -34,6 +37,9 @@ const deliverySchema = new Schema({
             type: String,
             enum: ['playing', 'out'],
             default: 'playing'
+        },
+        outType: {
+            type: String,
         }
     },
     bowler: {
@@ -51,24 +57,24 @@ const deliverySchema = new Schema({
             type: Number,
             default: 0
         },
-        extraRun: {
-            wide: {
-                type: Number,
-            },
-            noBall: {
-                type: Number,
-            },
-            legByes: {
-                type: Number,
-            }
-        }
     },
     run: {
         type: Number
     },
     extraRun: {
-        type: Number,
-        default: 0
+        wide: {
+            type: String,
+        },
+        noBall: {
+            type: String,
+        },
+        legByes: {
+            type: String,
+        },
+        runs:{
+            type: Number,
+            default: 0
+        }
     },
     additional: {
         type: String,

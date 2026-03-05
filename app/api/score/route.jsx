@@ -27,21 +27,17 @@ export async function GET(req) {
       }
 
       const cleanup = () => {
-        // remove the client when the request is aborted
         global.sseClients = global.sseClients.filter((c) => c.id !== clientId);
         clients = global.sseClients;
         try {
           controller.close();
-        } catch {} // ignore if already closed
+        } catch {}
       };
-
       req.signal.addEventListener("abort", cleanup);
     },
     cancel() {
-      // nothing special to do here
     },
   });
-
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
@@ -50,7 +46,6 @@ export async function GET(req) {
     },
   });
 }
-
 export function notifyClients(data) {
   if (!global.sseClients) return;
   global.sseClients = global.sseClients.filter((client) => {

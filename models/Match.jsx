@@ -15,11 +15,24 @@ const matchSchema = new Schema({
     ground: {
         type: String,
     },
-    teamA: {
-        type: String,
+    teams: {
+        team1: {
+            type: String,
+        },
+        team2: {
+            type: String,
+        },
     },
-    teamB: {
-        type: String,
+    status: {
+        tossWinner: {
+            type: String,
+        },
+        firstPlay: {
+            type: String,
+        },
+        matchWinner: {
+            type: String,
+        },
     },
     innings: {
         inning1: {

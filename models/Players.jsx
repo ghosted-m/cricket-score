@@ -10,9 +10,10 @@ const playerSchema = new mongoose.Schema({
 const teamSchema = new mongoose.Schema({
     teamName: String,
     players: [playerSchema],
-}, {
-    collection: "teams",
-    timestamps: true
-})
+},
+    {
+        collection: "teams",
+        timestamps: true
+    })
 
 export default mongoose.models.Team || mongoose.model("Team", teamSchema);

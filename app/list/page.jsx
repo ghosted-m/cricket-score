@@ -1,9 +1,8 @@
 'use client';
-import { useState } from "react";
-const page = ({ data }) => {
+import useData from "@/components/getData";
+const page = () => {
   const headers = ['players', 'runs', 'balls', 'fours', 'sixes', 'sr'];
-  const [dataState, setDataState] = useState(data);
-
+  const data = useData('/api/score');
   const safeInnings = (item) => item?.innings?.inning1 ?? [];
   // -------------------------------------------
   const getFour = (data, player) => {
@@ -22,45 +21,46 @@ const page = ({ data }) => {
     }, 0);
   }
   // ---------------------------------------------
+  
   const batterRuns = (data, player) => {
     return data.reduce((totalRuns, total) => {
-      const players = safeInnings(total).filter((inning) => inning.strike.player === player)
-      const runs = players.reduce((count, item) => {
+      const playerRuns = safeInnings(total).filter((inning) => inning.strike.player === player)
+      const matchRuns = playerRuns.reduce((count, item) => {
         return count + (item.strike.run || 0);
       }, 0)
-      return totalRuns + runs
+      return totalRuns + matchRuns
     }, 0)
   }
 
   const bowlerRuns = (data, player) => {
     return data.reduce((totalRuns, total) => {
-      const players = safeInnings(total).filter((inning) => inning.bowler.player === player)
-      const runs = players.reduce((count, item) => {
+      const listPlayer = safeInnings(total).filter((inning) => inning.bowler.player === player)
+      const playerRun = listPlayer.reduce((count, item) => {
         return count + (item.bowler.run || 0)
       }, 0)
-      return totalRuns + runs
-    }, 0)
-  }
-  // ---------------------------------------------
-  const bowlerWickets = (data, player) => {
-    return data.reduce((totalWickets, total) => {
-      const players = safeInnings(total).filter((inning) => inning.bowler.player === player)
-      const wicket = players.reduce((count, item) => {
-        return count + (item.bowler.wicket || 0)
-      }, 0)
-      return totalWickets + wicket
+      return totalRuns + playerRun
     }, 0)
   }
 
   // ---------------------------------------------
+  const bowlerWickets = (data, player) => {
+    return data.reduce((totalRuns, total) => {
+      const listPlayer = safeInnings(total).filter((inning) => inning.bowler.player === player)
+      const playerWicket = listPlayer.reduce((count, item) => {
+        return count + (item.bowler.wicket || 0)
+      }, 0)
+      return totalRuns + playerWicket
+    }, 0)
+  }
+  // ---------------------------------------------
   const totalWickets = data.reduce((count, item) => {
-    const playerWickets = safeInnings(item).filter((inning) => inning.strike.playingStatus === "out" || inning.nonStrike.playingStatus === "out")
+    const playerWickets = safeInnings(item).filter((inning) => inning.bowler.wicket)
     return count + playerWickets.length
   }, 0)
   // ---------------------------------------------
   const extraRuns = data.reduce((count, item) => {
     const extraRun = safeInnings(item).reduce((count, inning) => {
-      return count + inning.extraRun.runs
+      return count + inning.extraRun
     }, 0)
     return count + extraRun
   }, 0)
@@ -68,7 +68,7 @@ const page = ({ data }) => {
 
   const totalRuns = data.reduce((count, item) => {
     return count + safeInnings(item).reduce((count, item) => {
-      return count + (item.run || 0) + (item.extraRun.runs || 0)
+      return count + (item.run || 0) + (item.extraRun || 0)
     }, 0)
   }, 0)
 
@@ -111,29 +111,47 @@ const page = ({ data }) => {
     const ball = countValidBalls % 6;
     return { over, ball };
   }
-
   // get details of out players (who got out and who is the bowler)
   const playingStatus = (data) => {
     if (!Array.isArray(data) || data.length === 0) return [];
     const innings = safeInnings(data[0]) || [];
-    return innings.reduce((outPlayers, inning) => {
-      if (inning?.strike?.playingStatus === "out") {
-        outPlayers.push({ player: inning.strike.player, bowler: inning.bowler.player });
-      }
-      if (inning?.nonStrike?.playingStatus === "out") {
-        outPlayers.push({ player: inning.nonStrike.player, bowler: inning.bowler.player });
-      }
-      return outPlayers;
+    return innings.reduce((allPlayers, inning) => {
+      const b = ["strike", "nonStrike"]
+      b.forEach(b => {
+        if (inning?.[b]?.playingStatus === "out") {
+          const batter = inning;
+          if (batter) {
+            allPlayers.push(batter);
+          }
+        }
+      });
+      return allPlayers;
     }, []);
   };
 
-  const outPlayersData = playingStatus(data);
-  const outPlayersNames = outPlayersData.map(d => d.player);
+  const wicketBy = (data, player) => {
+    return data
+      .filter((a) =>
+        a.strike.player === player && a.strike.playingStatus === 'out' ||
+        a.nonStrike.player === player && a.nonStrike.playingStatus === 'out'
+      )
+      .map((a) => a.bowler.player)
+  }
 
-  const getWicketInfo = (player) => {
-    const info = outPlayersData.find(d => d.player === player);
-    return info ? `(out) b ${info.bowler}` : "";
-  };
+  const playerStatus = (data) => {
+    return data
+      .filter((s) =>
+        s.strike.playingStatus === 'out' ||
+        s.nonStrike.playingStatus === 'out'
+      )
+      .reduce((acc, prev) => {
+        const value = prev.strike.player && prev.nonStrike.player
+        acc.push(value)
+        return acc;
+      }, [])
+  }
+  const outBatter = playerStatus(playingStatus(data));
+  const outPlayers = uniquePlayers.filter(player => outBatter.includes(player));
 
   return (
     <div>
@@ -146,28 +164,17 @@ const page = ({ data }) => {
         <tbody className="border-b">
           {uniquePlayers.map((player, key) => (
             <tr className="border-b" key={key}>
-              <td className="flex flex-row gap-4 px-8 py-4 w-80">
-                {player}
-                {outPlayersNames.includes(player) ? (
-                  <span className="pl-8 text-sm font-thin text-red-500">
-                    {getWicketInfo(player)}
-                  </span>
-                ) : (
-                  <span className="pl-8 text-sm font-thin text-green-500">
-                    (playing)
-                  </span>
-                )}
-              </td>
+              <td className="px-8 py-4 w-80">{player} {outPlayers.includes(player) ? <span className="pl-8 text-sm font-thin text-red-500">(out) {wicketBy(playingStatus(data), player)}</span> : <span className="pl-8 text-sm font-thin text-green-500">(playing)</span>}</td>
               <td className="px-8 py-4">{batterRuns(data, player)}</td>
               <td className="px-8 py-4">{playedBalls(data, player)}</td>
               <td className="px-8 py-4">{getFour(data, player)}</td>
               <td className="px-8 py-4">{getSix(data, player)}</td>
-              <td className="px-8 py-4">{playedBalls(data, player) ? (batterRuns(data, player) / playedBalls(data, player) * 100).toFixed(2) : "0.00"}</td>
+              <td className="px-8 py-4">{(batterRuns(data, player) / playedBalls(data, player) * 100).toFixed(2)}</td>
             </tr>))}
         </tbody>
       </table>
       <br />
-      <div className="text-green-800 font-bold w-full px-8 flex flex-row gap-8 justify-end"><div>{totalRuns}/{totalWickets} ({overBall()?.over}.{overBall()?.ball})</div>
+      <div className="text-green-800 font-bold px-8 flex flex-row gap-8 justify-end"><div>{totalRuns}/{totalWickets} ({overBall()?.over}.{overBall()?.ball})</div>
         <div> Extras -  {extraRuns} </div>
         <div>RR - {(totalRuns / (overBall()?.over + overBall()?.ball / 6 || 1)).toFixed(2)}</div>
       </div>
@@ -177,3 +184,4 @@ const page = ({ data }) => {
 export default page;
 
 //bowlingStatus = ['bowling', 'o', 'm', 'r', 'w', 'econ', 'os', 'wd', 'nb' ]    
+// player 1 out by player

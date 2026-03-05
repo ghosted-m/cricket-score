@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-const useData = () => {
+const useData = (api) => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    const es = new EventSource("/api/score");
+    const es = new EventSource(api);
     es.onmessage = (e) => {
       setData(JSON.parse(e.data));
     };

@@ -4,11 +4,18 @@ import Match from "@/models/Match";
 export async function POST(req) {
     await connectDB();
     const body = await req.json();
-    const { matchName, matchDate, ground, teamA, teamB } = body;
-    if (!matchName || !matchDate || !ground || !teamA || !teamB) {
+    const { series, matchName, matchDate, ground, team1, team2 } = body;
+    if (!series || !matchName || !matchDate || !ground || !team1 || !team2) {
         return Response.json({ error: "All fields are required" }, { status: 400 });
-    }   
-    const match = await Match.create(body);
+    }
+    const data = {
+        series,
+        matchName,
+        matchDate,
+        ground,
+        teams: { team1, team2 }
+    }
+    const match = await Match.create(data);
     return Response.json(match, { status: 201 });
 }
 

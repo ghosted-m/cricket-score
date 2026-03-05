@@ -1,5 +1,5 @@
 "use client";
-import Page from "./live-score/page";
+import Page from "../live-score/page";
 import useData from "@/components/getData";
 import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
@@ -22,38 +22,44 @@ export default function Home() {
     noBall: false,
     legByes: false,
   });
-const dataFromHook = useData();
+  const dataFromHook = useData('/api/score');
   useEffect(() => {
-      const parsed = dataFromHook;
-      const outs = playingStatus(parsed).map((p) => p.player);
-      if (outs.length > 0 && JSON.stringify(outs) !== JSON.stringify(outPlayersState)) {
-        setOutPlayersState(outs);
-      }
-      setData(parsed);
-    }, [dataFromHook]);
+    const parsed = dataFromHook;
+    const outs = playingStatus(parsed).map((p) => p.player);
+    if (
+      outs.length > 0 &&
+      JSON.stringify(outs) !== JSON.stringify(outPlayersState)
+    ) {
+      setOutPlayersState(outs);
+    }
+    setData(parsed);
+  }, [dataFromHook]);
   const playingStatus = (data) => {
-  if (!data || data.length === 0) return [];
-  const match = data[0];
-  const innings = match.innings?.inning1 || [];
-  return innings.reduce((allPlayers, inning) => {
-    if (inning?.strike?.playingStatus === "out") {
-      allPlayers.push(inning.strike);
-    }
-    if (inning?.nonStrike?.playingStatus === "out") {
-      allPlayers.push(inning.nonStrike);
-    }
-    return allPlayers;
-  }, []);
-};  
+    if (!data || data.length === 0) return [];
+    const match = data[0];
+    const innings = match.innings?.inning1 || [];
+    return innings.reduce((allPlayers, inning) => {
+      if (inning?.strike?.playingStatus === "out") {
+        allPlayers.push(inning.strike);
+      }
+      if (inning?.nonStrike?.playingStatus === "out") {
+        allPlayers.push(inning.nonStrike);
+      }
+      return allPlayers;
+    }, []);
+  };
   const fetchPlayers = async () => {
     const res = await fetch("/api/team/list-player");
     const playersList = await res.json();
     const allNames = playersList.map((p) => `${p.first_name} ${p.last_name}`);
     const filtered = allNames.filter(
-      (name) => !outPlayersState.includes(name) && name !== strike && name !== nonStrike
+      (name) =>
+        !outPlayersState.includes(name) &&
+        name !== strike &&
+        name !== nonStrike,
     );
     const outfiltered = allNames.filter(
-      (name) => name === strike || name === nonStrike
+      (name) => name === strike || name === nonStrike,
     );
     setOptions(filtered);
     setOutPlayerOptions(outfiltered);
@@ -101,9 +107,20 @@ const dataFromHook = useData();
 
   const handleSubmit = async () => {
     const data = {
-      strikePlayer: {player: strike, run:runs?.title, playingStatus: selectedOutPlayer === strike ? 'out' : 'playing'},
-      nonStrikePlayer: {player: nonStrike, playingStatus: selectedOutPlayer === nonStrike ? 'out' : 'playing'},
-      bowling: {player: bowling, run:runs?.title, wicket: checked.wicket ? 1 : 0},
+      strikePlayer: {
+        player: strike,
+        run: runs?.title,
+        playingStatus: selectedOutPlayer === strike ? "out" : "playing",
+      },
+      nonStrikePlayer: {
+        player: nonStrike,
+        playingStatus: selectedOutPlayer === nonStrike ? "out" : "playing",
+      },
+      bowling: {
+        player: bowling,
+        run: runs?.title,
+        wicket: checked.wicket ? 1 : 0,
+      },
       runs: runs?.title,
       extraRun:
         checked.wideBall || checked.noBall || checked.legByes ? extraRun : 0,
@@ -199,8 +216,8 @@ const dataFromHook = useData();
       </div>
 
       <div className="row-span-2 w-full p-8">
-        <Page data={dataFromHook}/>
-        </div>
+        <Page data={dataFromHook} />
+      </div>
 
       <div className="px-16 py-8">
         <div className="flex flex-row gap-8 p-2 border-b border-t">
